@@ -25,3 +25,23 @@ las publicaciones del proyecto.
 No fue necesario crear otro commit.
 - Comprobación: archivo docs/publicaciones.md visible
 en GitHub con el contenido esperado.
+
+## Tercera publicación: casos de reserva
+
+- Fecha: 15/11/2026.
+- Rama: main.
+- Commit publicado: c8787d3.
+- Cambio: añadidos los ejemplos de comportamiento de las reservas
+  y actualizado el registro de publicaciones.
+- Comprobación: el push terminó correctamente y el documento
+  docs/reglas-reserva.md se muestra correctamente en GitHub.
+
+## Cuarta publicación: formato del README
+
+- Fecha: 15/11/2026.
+- Rama: main.
+- Commit publicado: 4233666.
+- Cambio: eliminados los espacios anteriores a los guiones
+  para corregir el formato de las listas del README.
+- Comprobación: el push terminó correctamente y las listas
+  del README se muestran correctamente en GitHub.
