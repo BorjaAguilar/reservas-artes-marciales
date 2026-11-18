@@ -47,7 +47,12 @@ El gimnasio será responsable de dar de alta a los usuarios.
 
 ## Estado del proyecto
 
-El servidor Spring Boot arranca y dispone de `GET /api/saludo` como comprobación inicial. La prueba de carga del contexto de la aplicación pasa correctamente.
+El servidor Spring Boot dispone de dos rutas:
+
+- `GET /api/saludo`: comprobación inicial del servidor.
+- `GET /api/disciplinas`: consulta de las cinco disciplinas, definidas como una lista fija en memoria.
+
+La prueba de carga del contexto de la aplicación pasa correctamente. La consulta de disciplinas se ha comprobado manualmente, verificando el estado HTTP, el tipo de contenido y los valores devueltos.
 
 Las reservas, la autenticación, la integración con PostgreSQL y la interfaz están pendientes de implementación.
 
@@ -78,9 +83,40 @@ La respuesta esperada es:
 Servidor de reservas de clases de artes marciales en funcionamiento
 ```
 
-La ruta `/api/saludo` es una comprobación inicial del servidor. La ruta raíz `/` no tiene una respuesta definida y devuelve HTTP 404.
+La ruta raíz `/` no tiene una respuesta definida y devuelve HTTP 404.
 
 Para detener el servidor, pulsar **Ctrl + C** en la terminal. Si Windows solicita confirmar la finalización del trabajo por lotes, aceptar.
+
+## Consulta de disciplinas
+
+Con el servidor en ejecución, realizar una petición GET a:
+
+[Consultar disciplinas](http://localhost:8080/api/disciplinas)
+
+La respuesta devuelve HTTP `200 OK`, con tipo de contenido `application/json`:
+
+```json
+["Boxeo","Muay Thai","BJJ gi","BJJ no gi","MMA"]
+```
+
+Actualmente, las disciplinas están definidas como una lista fija en el código. La consulta todavía no utiliza PostgreSQL.
+
+### Comprobación manual en PowerShell
+
+Con el servidor en ejecución, abrir otra terminal y ejecutar:
+
+```powershell
+$respuesta = Invoke-WebRequest -Uri "http://localhost:8080/api/disciplinas" -UseBasicParsing
+$respuesta.StatusCode
+$respuesta.Headers["Content-Type"]
+$respuesta.Content
+```
+
+Los resultados esperados son:
+
+- Estado HTTP: `200`.
+- Tipo de contenido: `application/json`.
+- Contenido: el array JSON con las cinco disciplinas.
 
 ## Pruebas
 
@@ -90,7 +126,7 @@ Desde la carpeta `backend`, ejecutar:
 .\mvnw.cmd test
 ```
 
-Actualmente existe una prueba que comprueba que el contexto de Spring Boot puede cargarse correctamente. Todavía no se comprueban automáticamente la respuesta de `/api/saludo` ni las reglas de reserva.
+Actualmente existe una prueba que comprueba que el contexto de Spring Boot puede cargarse correctamente. Todavía no se comprueban automáticamente las respuestas de `/api/saludo` y `/api/disciplinas` ni las reglas de reserva.
 
 Una ejecución correcta debe finalizar con `BUILD SUCCESS` y sin fallos ni errores en el resumen de pruebas.
 
