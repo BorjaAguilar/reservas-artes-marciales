@@ -50,9 +50,11 @@ El gimnasio será responsable de dar de alta a los usuarios.
 El servidor Spring Boot dispone de dos rutas:
 
 - `GET /api/saludo`: comprobación inicial del servidor.
-- `GET /api/disciplinas`: consulta de las cinco disciplinas, definidas como una lista fija en memoria.
+- `GET /api/disciplinas`: consulta de las cinco disciplinas, con un identificador y un nombre para cada una.
 
-La prueba de carga del contexto de la aplicación pasa correctamente. La consulta de disciplinas se ha comprobado manualmente, verificando el estado HTTP, el tipo de contenido y los valores devueltos.
+Las disciplinas se representan mediante objetos de la clase `Disciplina`. Los datos están definidos en el código y se mantienen en memoria, sin conexión con una base de datos.
+
+La respuesta de disciplinas se ha comprobado manualmente desde el navegador. Existe una prueba automatizada de carga del contexto de Spring Boot.
 
 Las reservas, la autenticación, la integración con PostgreSQL y la interfaz están pendientes de implementación.
 
@@ -93,13 +95,24 @@ Con el servidor en ejecución, realizar una petición GET a:
 
 [Consultar disciplinas](http://localhost:8080/api/disciplinas)
 
-La respuesta devuelve HTTP `200 OK`, con tipo de contenido `application/json`:
+La respuesta esperada devuelve HTTP `200 OK`, con tipo de contenido `application/json`:
 
 ```json
-["Boxeo","Muay Thai","BJJ gi","BJJ no gi","MMA"]
+[
+  {"id": 1, "nombre": "Boxeo"},
+  {"id": 2, "nombre": "Muay Thai"},
+  {"id": 3, "nombre": "BJJ gi"},
+  {"id": 4, "nombre": "BJJ no gi"},
+  {"id": 5, "nombre": "MMA"}
+]
 ```
 
-Actualmente, las disciplinas están definidas como una lista fija en el código. La consulta todavía no utiliza PostgreSQL.
+Cada elemento contiene:
+
+- `id`: identificador numérico de la disciplina.
+- `nombre`: nombre de la disciplina.
+
+Los identificadores se asignan manualmente en el código. Actualmente, la consulta utiliza una lista fija de objetos `Disciplina`; todavía no utiliza PostgreSQL.
 
 ### Comprobación manual en PowerShell
 
@@ -116,7 +129,7 @@ Los resultados esperados son:
 
 - Estado HTTP: `200`.
 - Tipo de contenido: `application/json`.
-- Contenido: el array JSON con las cinco disciplinas.
+- Contenido: un array de cinco objetos, cada uno con las propiedades `id` y `nombre`, según la respuesta documentada.
 
 ## Pruebas
 
