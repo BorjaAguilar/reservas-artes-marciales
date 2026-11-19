@@ -38,6 +38,7 @@ El gimnasio será responsable de dar de alta a los usuarios.
 
 - Java y Spring Boot para el servidor.
 - Maven Wrapper para compilar, ejecutar pruebas y arrancar la aplicación.
+- JUnit Jupiter para las pruebas automatizadas.
 - Git y GitHub para gestionar y publicar el historial del proyecto.
 
 ### Previstas
@@ -47,14 +48,19 @@ El gimnasio será responsable de dar de alta a los usuarios.
 
 ## Estado del proyecto
 
-El servidor Spring Boot dispone de dos rutas:
+El servidor Spring Boot dispone de tres rutas:
 
-- `GET /api/saludo`: comprobación inicial del servidor.
-- `GET /api/disciplinas`: consulta de las cinco disciplinas, con un identificador y un nombre para cada una.
+| Método | Ruta | Función |
+|---|---|---|
+| GET | `/api/saludo` | Comprobación inicial del servidor. |
+| GET | `/api/disciplinas` | Consulta de todas las disciplinas. |
+| GET | `/api/disciplinas/{id}` | Consulta de una disciplina por su identificador. |
 
 Las disciplinas se representan mediante objetos de la clase `Disciplina`. Los datos están definidos en el código y se mantienen en memoria, sin conexión con una base de datos.
 
-La respuesta de disciplinas se ha comprobado manualmente desde el navegador. Existe una prueba automatizada de carga del contexto de Spring Boot.
+`DisciplinaController` atiende las peticiones HTTP y delega las consultas en `DisciplinaService`, que recibe mediante inyección por constructor.
+
+Existen tres pruebas automatizadas: una de carga del contexto de Spring Boot y dos de búsqueda en el servicio. Las respuestas HTTP se han comprobado manualmente.
 
 Las reservas, la autenticación, la integración con PostgreSQL y la interfaz están pendientes de implementación.
 
@@ -91,6 +97,8 @@ Para detener el servidor, pulsar **Ctrl + C** en la terminal. Si Windows solicit
 
 ## Consulta de disciplinas
 
+### Listar todas las disciplinas
+
 Con el servidor en ejecución, realizar una petición GET a:
 
 [Consultar disciplinas](http://localhost:8080/api/disciplinas)
@@ -114,6 +122,25 @@ Cada elemento contiene:
 
 Los identificadores se asignan manualmente en el código. Actualmente, la consulta utiliza una lista fija de objetos `Disciplina`; todavía no utiliza PostgreSQL.
 
+### Consultar una disciplina por identificador
+
+Realizar una petición GET a `/api/disciplinas/{id}`, sustituyendo `{id}` por el identificador deseado.
+
+Por ejemplo:
+
+[Consultar Boxeo](http://localhost:8080/api/disciplinas/1)
+
+La respuesta esperada devuelve HTTP `200 OK`, con tipo de contenido `application/json`:
+
+```json
+{
+  "id": 1,
+  "nombre": "Boxeo"
+}
+```
+
+Si el identificador numérico no corresponde a ninguna disciplina, como en `/api/disciplinas/999`, la respuesta devuelve HTTP `404 Not Found`, sin cuerpo.
+
 ### Comprobación manual en PowerShell
 
 Con el servidor en ejecución, abrir otra terminal y ejecutar:
@@ -129,9 +156,19 @@ Los resultados esperados son:
 
 - Estado HTTP: `200`.
 - Tipo de contenido: `application/json`.
-- Contenido: un array de cinco objetos, cada uno con las propiedades `id` y `nombre`, según la respuesta documentada.
+- Contenido: un array de cinco objetos con las propiedades `id` y `nombre`.
+
+Para comprobar las consultas individuales, utilizar los siguientes casos:
+
+| Petición | Resultado esperado |
+|---|---|
+| `GET /api/disciplinas/1` | HTTP `200`, con el objeto de Boxeo. |
+| `GET /api/disciplinas/3` | HTTP `200`, con el objeto de BJJ gi. |
+| `GET /api/disciplinas/999` | HTTP `404`, sin cuerpo. |
 
 ## Pruebas
+
+Las clases de pruebas se encuentran en `backend/src/test/java`.
 
 Desde la carpeta `backend`, ejecutar:
 
@@ -139,9 +176,28 @@ Desde la carpeta `backend`, ejecutar:
 .\mvnw.cmd test
 ```
 
-Actualmente existe una prueba que comprueba que el contexto de Spring Boot puede cargarse correctamente. Todavía no se comprueban automáticamente las respuestas de `/api/saludo` y `/api/disciplinas` ni las reglas de reserva.
+Para eliminar los resultados compilados anteriores y ejecutar las pruebas desde una compilación limpia:
 
-Una ejecución correcta debe finalizar con `BUILD SUCCESS` y sin fallos ni errores en el resumen de pruebas.
+```powershell
+.\mvnw.cmd clean test
+```
+
+Actualmente se ejecutan tres pruebas:
+
+| Clase | Comprobación |
+|---|---|
+| `BackendApplicationTests` | El contexto de Spring Boot carga correctamente. |
+| `DisciplinaServiceTests` | Buscar el identificador `5` devuelve la disciplina MMA con sus datos esperados. |
+| `DisciplinaServiceTests` | Buscar el identificador `999` devuelve un resultado vacío. |
+
+La última ejecución comprobada terminó con:
+
+```text
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```
+
+Las pruebas del servicio validan la búsqueda directamente, sin arrancar Spring. Todavía no se comprueban automáticamente los estados HTTP, la serialización JSON ni las reglas de reserva.
 
 ## Importación en IntelliJ IDEA
 
