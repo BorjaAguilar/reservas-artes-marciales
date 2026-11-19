@@ -3,6 +3,7 @@ package com.borja.reservas;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DisciplinaService {
@@ -17,4 +18,17 @@ public class DisciplinaService {
         );
         return disciplinas;
     }
+
+    public Optional<Disciplina> buscarPorId(long id){
+
+        List<Disciplina> disciplinas = listarDisciplinas();
+        for(int i=0; i<disciplinas.size();i++){
+            Disciplina disciplina = disciplinas.get(i);
+            if(disciplina.getId() == id){
+                return Optional.of(disciplina);
+            }
+        }
+        return Optional.empty();
+    }
+
 }
