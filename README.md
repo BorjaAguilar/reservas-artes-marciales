@@ -48,19 +48,22 @@ El gimnasio será responsable de dar de alta a los usuarios.
 
 ## Estado del proyecto
 
-El servidor Spring Boot dispone de tres rutas:
+El servidor Spring Boot dispone de cuatro rutas:
 
 | Método | Ruta | Función |
 |---|---|---|
 | GET | `/api/saludo` | Comprobación inicial del servidor. |
 | GET | `/api/disciplinas` | Consulta de todas las disciplinas. |
 | GET | `/api/disciplinas/{id}` | Consulta de una disciplina por su identificador. |
+| GET | `/api/clases` | Consulta de las clases programadas. |
 
-Las disciplinas se representan mediante objetos de la clase `Disciplina`. Los datos están definidos en el código y se mantienen en memoria, sin conexión con una base de datos.
+Las disciplinas y las sesiones se representan mediante las clases `Disciplina` y `ClaseProgramada`. Los datos están definidos en el código y se mantienen en memoria, sin conexión con una base de datos.
 
-`DisciplinaController` atiende las peticiones HTTP y delega las consultas en `DisciplinaService`, que recibe mediante inyección por constructor.
+Los controladores atienden las peticiones HTTP y delegan las consultas en servicios, que reciben mediante inyección por constructor.
 
-Existen tres pruebas automatizadas: una de carga del contexto de Spring Boot y dos de búsqueda en el servicio. Las respuestas HTTP se han comprobado manualmente.
+El modelo de clases programadas establece una capacidad de 30 plazas y calcula la hora de finalización sumando 90 minutos al inicio.
+
+Existen cinco pruebas automatizadas: una de carga del contexto de Spring Boot, dos de búsqueda de disciplinas y dos del modelo de clases programadas. Las respuestas HTTP se han comprobado manualmente.
 
 Las reservas, la autenticación, la integración con PostgreSQL y la interfaz están pendientes de implementación.
 
@@ -166,6 +169,58 @@ Para comprobar las consultas individuales, utilizar los siguientes casos:
 | `GET /api/disciplinas/3` | HTTP `200`, con el objeto de BJJ gi. |
 | `GET /api/disciplinas/999` | HTTP `404`, sin cuerpo. |
 
+## Consulta de clases programadas
+
+Con el servidor en ejecución, realizar una petición GET a:
+
+[Consultar clases programadas](http://localhost:8080/api/clases)
+
+La respuesta esperada devuelve HTTP `200 OK`, con tipo de contenido `application/json`:
+
+```json
+[
+  {
+    "id": 101,
+    "disciplinaId": 1,
+    "fecha": "2026-11-23",
+    "horaInicio": "18:00:00",
+    "capacidad": 30,
+    "horaFin": "19:30:00"
+  },
+  {
+    "id": 102,
+    "disciplinaId": 2,
+    "fecha": "2026-11-23",
+    "horaInicio": "18:00:00",
+    "capacidad": 30,
+    "horaFin": "19:30:00"
+  },
+  {
+    "id": 103,
+    "disciplinaId": 3,
+    "fecha": "2026-11-23",
+    "horaInicio": "19:30:00",
+    "capacidad": 30,
+    "horaFin": "21:00:00"
+  }
+]
+```
+
+Cada objeto contiene:
+
+- `id`: identificador de la sesión.
+- `disciplinaId`: identificador de la disciplina que se practica.
+- `fecha`: fecha de la sesión en formato `AAAA-MM-DD`.
+- `horaInicio`: hora de inicio.
+- `capacidad`: aforo máximo de 30 plazas.
+- `horaFin`: hora calculada sumando 90 minutos al inicio.
+
+Las sesiones 101 y 102 corresponden a disciplinas distintas y comparten horario. La sesión 103 empieza cuando terminan las anteriores.
+
+Los datos son ficticios y sus fechas están fijadas en el código. La consulta no filtra por semana ni por mes.
+
+La capacidad indica el aforo máximo; todavía no se gestionan reservas ni se calculan plazas disponibles.
+
 ## Pruebas
 
 Las clases de pruebas se encuentran en `backend/src/test/java`.
@@ -182,22 +237,24 @@ Para eliminar los resultados compilados anteriores y ejecutar las pruebas desde 
 .\mvnw.cmd clean test
 ```
 
-Actualmente se ejecutan tres pruebas:
+Actualmente se ejecutan cinco pruebas:
 
 | Clase | Comprobación |
 |---|---|
 | `BackendApplicationTests` | El contexto de Spring Boot carga correctamente. |
 | `DisciplinaServiceTests` | Buscar el identificador `5` devuelve la disciplina MMA con sus datos esperados. |
 | `DisciplinaServiceTests` | Buscar el identificador `999` devuelve un resultado vacío. |
+| `ClaseProgramadaTests` | Una sesión que empieza a las 19:45 termina a las 21:15, sin modificar su hora de inicio. |
+| `ClaseProgramadaTests` | La capacidad de una sesión es de 30 plazas. |
 
 La última ejecución comprobada terminó con:
 
 ```text
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
-Las pruebas del servicio validan la búsqueda directamente, sin arrancar Spring. Todavía no se comprueban automáticamente los estados HTTP, la serialización JSON ni las reglas de reserva.
+Las pruebas del servicio y del modelo se ejecutan directamente, sin arrancar Spring. Todavía no se comprueban automáticamente los estados HTTP, la serialización JSON ni las reglas de reserva.
 
 ## Importación en IntelliJ IDEA
 
