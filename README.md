@@ -55,7 +55,7 @@ El servidor Spring Boot dispone de cuatro rutas:
 | GET | `/api/saludo` | Comprobación inicial del servidor. |
 | GET | `/api/disciplinas` | Consulta de todas las disciplinas. |
 | GET | `/api/disciplinas/{id}` | Consulta de una disciplina por su identificador. |
-| GET | `/api/clases` | Consulta de las clases programadas. |
+| GET | `/api/clases` | Consulta de clases programadas, con filtro opcional por fechas. |
 
 Las disciplinas y las sesiones se representan mediante las clases `Disciplina` y `ClaseProgramada`. Los datos están definidos en el código y se mantienen en memoria, sin conexión con una base de datos.
 
@@ -63,7 +63,9 @@ Los controladores atienden las peticiones HTTP y delegan las consultas en servic
 
 El modelo de clases programadas establece una capacidad de 30 plazas y calcula la hora de finalización sumando 90 minutos al inicio.
 
-Existen cinco pruebas automatizadas: una de carga del contexto de Spring Boot, dos de búsqueda de disciplinas y dos del modelo de clases programadas. Las respuestas HTTP se han comprobado manualmente.
+El filtro de clases admite un intervalo de fechas con ambos extremos incluidos. Rechaza las peticiones con una sola fecha o con el intervalo invertido.
+
+Existen ocho pruebas automatizadas: una de carga del contexto de Spring Boot, dos de búsqueda de disciplinas, dos del modelo de clases programadas y tres del filtrado por fechas. Las respuestas HTTP se han comprobado manualmente.
 
 Las reservas, la autenticación, la integración con PostgreSQL y la interfaz están pendientes de implementación.
 
@@ -171,7 +173,9 @@ Para comprobar las consultas individuales, utilizar los siguientes casos:
 
 ## Consulta de clases programadas
 
-Con el servidor en ejecución, realizar una petición GET a:
+### Listar todas las sesiones
+
+Con el servidor en ejecución, realizar una petición GET sin parámetros a:
 
 [Consultar clases programadas](http://localhost:8080/api/clases)
 
@@ -217,9 +221,32 @@ Cada objeto contiene:
 
 Las sesiones 101 y 102 corresponden a disciplinas distintas y comparten horario. La sesión 103 empieza cuando terminan las anteriores.
 
-Los datos son ficticios y sus fechas están fijadas en el código. La consulta no filtra por semana ni por mes.
+Los datos son ficticios y sus fechas están fijadas en el código.
 
 La capacidad indica el aforo máximo; todavía no se gestionan reservas ni se calculan plazas disponibles.
+
+### Filtrar por fechas
+
+La ruta `/api/clases` acepta los parámetros opcionales `desde` y `hasta`, con formato `AAAA-MM-DD`.
+
+Si se utiliza el filtro, deben proporcionarse ambas fechas. Los dos extremos del intervalo están incluidos y se permite que coincidan.
+
+Ejemplo:
+
+[Consultar clases del 23 al 29 de noviembre](http://localhost:8080/api/clases?desde=2026-11-23&hasta=2026-11-29)
+
+| Parámetros | Resultado esperado |
+|---|---|
+| Sin parámetros | HTTP `200` con todas las sesiones. |
+| `desde=2026-11-23&hasta=2026-11-23` | HTTP `200` con las tres sesiones de ese día. |
+| `desde=2026-11-24&hasta=2026-11-30` | HTTP `200` con una lista vacía: `[]`. |
+| Solo `desde` | HTTP `400`, sin cuerpo. |
+| Solo `hasta` | HTTP `400`, sin cuerpo. |
+| `desde` posterior a `hasta` | HTTP `400`, sin cuerpo. |
+
+Los ejemplos utilizan las sesiones ficticias fijadas para el 23 de noviembre de 2026.
+
+La consulta permite seleccionar un intervalo de fechas. Todavía no aplica la restricción de navegación hasta el final del mes actual.
 
 ## Pruebas
 
@@ -237,7 +264,7 @@ Para eliminar los resultados compilados anteriores y ejecutar las pruebas desde 
 .\mvnw.cmd clean test
 ```
 
-Actualmente se ejecutan cinco pruebas:
+Actualmente se ejecutan ocho pruebas:
 
 | Clase | Comprobación |
 |---|---|
@@ -246,15 +273,18 @@ Actualmente se ejecutan cinco pruebas:
 | `DisciplinaServiceTests` | Buscar el identificador `999` devuelve un resultado vacío. |
 | `ClaseProgramadaTests` | Una sesión que empieza a las 19:45 termina a las 21:15, sin modificar su hora de inicio. |
 | `ClaseProgramadaTests` | La capacidad de una sesión es de 30 plazas. |
+| `ClaseProgramadaServiceTests` | Incluye las tres sesiones cuando ambas fechas del intervalo coinciden con su día. |
+| `ClaseProgramadaServiceTests` | Devuelve una lista vacía cuando no hay sesiones en el intervalo. |
+| `ClaseProgramadaServiceTests` | Lanza `IllegalArgumentException` cuando la fecha inicial es posterior a la final. |
 
 La última ejecución comprobada terminó con:
 
 ```text
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
-Las pruebas del servicio y del modelo se ejecutan directamente, sin arrancar Spring. Todavía no se comprueban automáticamente los estados HTTP, la serialización JSON ni las reglas de reserva.
+Las pruebas de los servicios y del modelo se ejecutan directamente, sin arrancar Spring. Todavía no se comprueban automáticamente los estados HTTP, la serialización JSON ni las reglas de reserva.
 
 ## Importación en IntelliJ IDEA
 
